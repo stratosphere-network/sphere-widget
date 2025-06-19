@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
-import { getRedirectLinks, type RequestLinkRedirect } from "./apis/sphereApi";
+import { getRedirectLinks } from "./apis/sphereApi";
+import type { RequestLinkRedirect } from "./apis/sphereApi";
 
 interface DecodedData {
   intent: "request" | "send";
@@ -37,6 +38,7 @@ function App() {
   const fetchRedirectLinks = async () => {
     try {
       const links = await getRedirectLinks();
+      console.log("Fetched redirect links:", links);
       setRedirectLinks(links);
       console.log("Fetched redirect links:", links);
     } catch (err) {
@@ -110,25 +112,31 @@ function App() {
   ): string => {
     if (!linkData || !redirectLinks) return "";
 
-    const { originalParam } = linkData;
+    const { originalParam, type } = linkData;
+
+    // Choose the correct redirect object based on link type
+    const redirectObject =
+      type === "request_link"
+        ? redirectLinks.requestRedirectLink
+        : redirectLinks.sendLinkRedirect;
 
     switch (platform) {
       case "telegram":
         // Telegram uses ?startapp= parameter
-        const telegramUrl = redirectLinks.telegram_url || redirectLinks.url;
+        const telegramUrl = redirectObject?.telegram_url;
         return `${telegramUrl}?startapp=${originalParam}`;
 
       case "web":
         // Web uses ?data= parameter
-        return `${redirectLinks.url}?data=${originalParam}`;
+        return `${redirectObject.url}?data=${originalParam}`;
 
       case "mobile":
         // Mobile uses ?data= parameter
-        const mobileUrl = redirectLinks.mobile_url || redirectLinks.url;
+        const mobileUrl = redirectObject.mobile_url || redirectObject.url;
         return `${mobileUrl}?data=${originalParam}`;
 
       default:
-        return redirectLinks.url;
+        return redirectObject.url;
     }
   };
 
@@ -256,7 +264,13 @@ function App() {
           <button
             className="platform-button telegram"
             onClick={() => handlePlatformSelect("telegram")}
-            disabled={!redirectLinks?.telegram_url && !redirectLinks?.url}
+            disabled={
+              !linkData ||
+              !redirectLinks ||
+              !(linkData.type === "request_link"
+                ? redirectLinks.requestRedirectLink?.telegram_url
+                : redirectLinks.sendLinkRedirect?.telegram_url)
+            }
           >
             <div className="platform-icon">📱</div>
             <div className="platform-info">
@@ -273,7 +287,13 @@ function App() {
           <button
             className="platform-button web"
             onClick={() => handlePlatformSelect("web")}
-            disabled={!redirectLinks?.url}
+            disabled={
+              !linkData ||
+              !redirectLinks ||
+              !(linkData.type === "request_link"
+                ? redirectLinks.requestRedirectLink?.url
+                : redirectLinks.sendLinkRedirect?.url)
+            }
           >
             <div className="platform-icon">🌐</div>
             <div className="platform-info">
@@ -290,7 +310,15 @@ function App() {
           <button
             className="platform-button mobile"
             onClick={() => handlePlatformSelect("mobile")}
-            disabled={!redirectLinks?.mobile_url && !redirectLinks?.url}
+            disabled={
+              !linkData ||
+              !redirectLinks ||
+              !(linkData.type === "request_link"
+                ? redirectLinks.requestRedirectLink?.mobile_url ||
+                  redirectLinks.requestRedirectLink?.url
+                : redirectLinks.sendLinkRedirect?.mobile_url ||
+                  redirectLinks.sendLinkRedirect?.url)
+            }
           >
             <div className="platform-icon">📲</div>
             <div className="platform-info">

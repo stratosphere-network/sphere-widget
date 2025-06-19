@@ -5,12 +5,22 @@ const BASE_URL =
 
 // API response interface matching the backend model
 export interface RequestLinkRedirect {
-  url: string;
-  telegram_url?: string;
-  mobile_url?: string;
-  project_api_key: string;
-  createdAt: string;
-  updatedAt: string;
+  requestRedirectLink: {
+    url: string;
+    telegram_url?: string;
+    mobile_url?: string;
+    project_api_key: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+  sendLinkRedirect: {
+    url: string;
+    telegram_url?: string;
+    mobile_url?: string;
+    project_api_key: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 // API request interface
